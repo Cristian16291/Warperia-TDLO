@@ -80,11 +80,12 @@ jobs:
             app/dist/**/*.exe
             app/dist/**
       - name: Publish Release
-        if: steps.decide.outputs.should_release == 'True' && github.ref == 'refs/heads/main'
+        if: steps.decide.outputs.should_release == 'True'
         uses: softprops/action-gh-release@v1
         with:
           tag_name: v${{ steps.pkg.outputs.version }}
           name: Warperia-TDLO v${{ steps.pkg.outputs.version }}
+          draft: false
           files: |
             app/dist/**/*.exe
             app/dist/**
