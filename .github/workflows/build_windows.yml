@@ -4,6 +4,9 @@ on:
     workflows: ["Generar castellano"]
     types: ["completed"]
   workflow_dispatch:
+concurrency:
+  group: build-windows
+  cancel-in-progress: false
 jobs:
   build:
     permissions:
@@ -30,7 +33,7 @@ jobs:
           script: |
             const { repo, owner } = context.repo;
             const rel = await github.rest.repos.getLatestRelease({ owner, repo }).catch(() => null);
-            return rel ? rel.data.tag_name : "";
+            core.setOutput('result', rel ? rel.data.tag_name : '');
       - name: Decide release
         id: decide
         shell: pwsh
@@ -40,6 +43,12 @@ jobs:
           if ($latestTag.StartsWith('v')) { $latestVer = $latestTag.Substring(1) } else { $latestVer = $latestTag }
           $should = $version -and ($version -ne $latestVer)
           echo "should_release=$should" >> $env:GITHUB_OUTPUT
+      - name: Debug environment
+        shell: pwsh
+        run: |
+          node -v
+          npm -v
+          Get-ChildItem -Recurse app | Select-Object -First 50
       - name: Install deps
         if: steps.decide.outputs.should_release == 'True'
         working-directory: app
@@ -52,6 +61,12 @@ jobs:
         if: steps.decide.outputs.should_release == 'True'
         working-directory: app
         run: npm run dist:win
+      - name: Check .exe exists
+        if: steps.decide.outputs.should_release == 'True'
+        shell: pwsh
+        run: |
+          $exe = Get-ChildItem app/dist -Filter *.exe -Recurse | Select-Object -First 1
+          if ($null -eq $exe) { Get-ChildItem app/dist -Recurse; throw "EXE no encontrado" }
       - name: Upload artifacts
         if: steps.decide.outputs.should_release == 'True'
         uses: actions/upload-artifact@v4
