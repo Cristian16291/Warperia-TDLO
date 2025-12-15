@@ -1,0 +1,13 @@
+name: Enforce Spanish only
+on:
+  push:
+    branches: ["main"]
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fail on English tokens
+        run: |
+          set -e
+          ! grep -RIEn "\b(English|Sign in|Login|Servers|Refresh|Settings|Search|Download|Update|Addons|Install|Error|Warning|Success)\b" app || (echo "English tokens found" && exit 1)
