@@ -263,7 +263,7 @@ const SessionModal = ({
   const realmPieData = buildRealmPieData();
   let mainChartType = "line";
   let mainChartData = buildMonthlyLineData();
-  let mainChartOptions = {
+  let mainChartOpciones = {
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
@@ -303,18 +303,18 @@ const SessionModal = ({
   if (barRange === "weekly") {
     mainChartType = "bar";
     mainChartData = buildWeeklyBarData();
-    mainChartOptions.scales.y.title.text = "Weekly Playtime";
+    mainChartOpciones.scales.y.title.text = "Weekly Playtime";
   } else if (barRange === "monthly") {
     mainChartType = "line";
     mainChartData = buildMonthlyLineData();
-    mainChartOptions.scales.y.title.text = "Monthly Playtime";
+    mainChartOpciones.scales.y.title.text = "Monthly Playtime";
   }
 
   const renderMainChart = () => {
     if (mainChartType === "line") {
-      return <Line data={mainChartData} options={mainChartOptions} />;
+      return <Line data={mainChartData} options={mainChartOpciones} />;
     }
-    return <Bar data={mainChartData} options={mainChartOptions} />;
+    return <Bar data={mainChartData} options={mainChartOpciones} />;
   };
 
   // “Load More”

@@ -135,8 +135,8 @@ const ComplementosPage = ({
     // Buscar state for installed addons
     const [installedBuscarQuery, setInstalaredBuscarQuery] = useState('');
 
-    // Sorting Options
-    const sortingOptions = [
+    // Sorting Opciones
+    const sortingOpciones = [
         { value: "installs", label: "Most Popular" },
         { value: "recently_added", label: "Recently Added" },
         { value: "recently_updated", label: "Recently Actualizard" },
@@ -436,9 +436,9 @@ const ComplementosPage = ({
         );
     };
 
-    const handleCategoryChange = async (selectedOptions) => {
-        setSelectedCategories(selectedOptions);
-        const categoryIds = selectedOptions.map((option) => option.value);
+    const handleCategoryChange = async (selectedOpciones) => {
+        setSelectedCategories(selectedOpciones);
+        const categoryIds = selectedOpciones.map((option) => option.value);
 
         if (categoryIds.length > 0) {
             setBuscarQuery(""); // Clear search query when filtering by categories
@@ -2319,7 +2319,7 @@ const ComplementosPage = ({
                                         placeholder="Categories"
                                         className="dark-select"
                                         classNamePrefix="warperia-select"
-                                        noOptionsMessage={({ inputValue }) =>
+                                        noOpcionesMessage={({ inputValue }) =>
                                             `No results for "${inputValue}"`
                                         }
                                     />
@@ -2328,7 +2328,7 @@ const ComplementosPage = ({
                             <div className="col-12 col-md-2">
                                 <Select
                                     value={selectedSorting}
-                                    options={sortingOptions}
+                                    options={sortingOpciones}
                                     onChange={handleSortingChange}
                                     placeholder="Sort By"
                                     className="dark-select"
