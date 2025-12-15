@@ -21,9 +21,16 @@ const pkgPath=path.join(out,'package.json');
 if(fs.existsSync(pkgPath)){
   const pkg=JSON.parse(fs.readFileSync(pkgPath,'utf8'));
   pkg.name='warperia-tdlo';
+  pkg.description='Gestor de addons para servidores privados de World of Warcraft';
   if(pkg.productName) pkg.productName='Warperia-TDLO';
-  // Ensure appId or identifiers reflect TDLO if present
-  if(pkg.build && pkg.build.appId) pkg.build.appId=pkg.build.appId.replace(/warperia/i,'warperia-tdlo');
+  if(pkg.build){
+    if(pkg.build.appId) pkg.build.appId='org.warperia.tdlo';
+    if(pkg.build.productName) pkg.build.productName='Warperia-TDLO';
+    if(pkg.build.publish && Array.isArray(pkg.build.publish)){
+      pkg.build.publish=[{provider:'github',owner:'Cristian16291',repo:'Warperia-TDLO'}];
+    }
+    if(pkg.build.win && pkg.build.win.icon) pkg.build.win.icon='assets/icon.ico';
+  }
   fs.writeFileSync(pkgPath,JSON.stringify(pkg,null,2));
 }
 const rep=[
@@ -42,7 +49,7 @@ const rep=[
   ['Error','Error'],
   ['Warning','Aviso'],
   ['Success','Correcto'],
-  ['Addons','Addons'],
+  ['Addons','Complementos'],
   ['Launch','Iniciar'],
   ['Restart','Reiniciar']
 ];
