@@ -23,6 +23,7 @@ if(fs.existsSync(pkgPath)){
   pkg.name='warperia-tdlo';
   pkg.description='Gestor de addons para servidores privados de World of Warcraft';
   if(pkg.productName) pkg.productName='Warperia-TDLO';
+  if(pkg.version && pkg.version !== '1.4.0') pkg.version='1.4.0';
   if(pkg.build){
     if(pkg.build.appId) pkg.build.appId='org.warperia.tdlo';
     if(pkg.build.productName) pkg.build.productName='Warperia-TDLO';
