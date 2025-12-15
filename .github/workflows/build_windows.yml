@@ -3,6 +3,10 @@ on:
   workflow_run:
     workflows: ["Generar castellano"]
     types: ["completed"]
+  push:
+    branches: ["main"]
+    paths:
+      - "app/**"
   workflow_dispatch:
 concurrency:
   group: build-windows
