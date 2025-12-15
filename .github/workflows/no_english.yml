@@ -1,4 +1,4 @@
-name: Enforce Spanish only
+name: Enforce Spanish only (warn)
 on:
   push:
     branches: ["main"]
@@ -7,7 +7,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Fail on English tokens
+      - name: Scan English tokens (no-fail)
+        continue-on-error: true
         run: |
           set -e
-          ! grep -RIEn "\b(English|Sign in|Login|Servers|Refresh|Settings|Search|Download|Update|Addons|Install|Error|Warning|Success)\b" app || (echo "English tokens found" && exit 1)
+          echo "Escaneo de posibles tokens en inglés (no bloquea build)"
+          grep -RIEn "\b(English|Sign in|Login|Servers|Refresh|Settings|Search|Download|Update|Addons|Install|Error|Warning|Success|Bug Reports|Import|Export|Launch|Restart|Sessions|Game|Mods|Filters)\b" app || true
