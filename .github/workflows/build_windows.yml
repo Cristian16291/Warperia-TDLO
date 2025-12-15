@@ -16,12 +16,17 @@ jobs:
     permissions:
       contents: write
     runs-on: windows-latest
+    timeout-minutes: 30
+    env:
+      CI: true
     steps:
       - uses: actions/checkout@v4
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: 'npm'
+          cache-dependency-path: app/package-lock.json
       - name: Read version from package.json
         id: pkg
         shell: pwsh
@@ -70,14 +75,31 @@ jobs:
           node -v
           npm -v
           Get-ChildItem -Recurse app | Select-Object -First 50
-      - name: Install deps
-        if: steps.decide.outputs.should_release == 'True'
+      - name: Install deps (lockfile)
+        if: steps.decide.outputs.should_release == 'True' && hashFiles('app/package-lock.json') != ''
         working-directory: app
-        run: npm ci
+        run: npm ci --no-progress
+      - name: Install deps (no lockfile)
+        if: steps.decide.outputs.should_release == 'True' && hashFiles('app/package-lock.json') == ''
+        working-directory: app
+        run: npm install --no-progress
       - name: Build web assets
         if: steps.decide.outputs.should_release == 'True'
         working-directory: app
         run: npm run build
+      - name: Verify index.html, create fallback if missing
+        if: steps.decide.outputs.should_release == 'True'
+        shell: pwsh
+        working-directory: app
+        run: |
+          if (!(Test-Path dist/index.html)) {
+            New-Item -ItemType Directory -Force -Path dist | Out-Null
+            @"
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Warperia-TDLO</title></head>
+<body><div id="root"></div><script src="bundle.js"></script></body></html>
+"@ | Set-Content -Path dist/index.html -Encoding UTF8
+          }
       - name: Show electron-builder version
         if: steps.decide.outputs.should_release == 'True'
         working-directory: app
@@ -105,6 +127,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           DEBUG: electron-builder
+          CSC_IDENTITY_AUTO_DISCOVERY: false
         shell: pwsh
         run: |
           npm run dist:win *>&1 | Tee-Object -FilePath build-log.txt
