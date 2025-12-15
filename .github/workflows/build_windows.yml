@@ -61,9 +61,16 @@ jobs:
         if: steps.decide.outputs.should_release == 'True'
         working-directory: app
         run: npm run build
+      - name: Show electron-builder version
+        if: steps.decide.outputs.should_release == 'True'
+        working-directory: app
+        run: npx electron-builder --version
       - name: Make Windows NSIS .exe (electron-builder)
         if: steps.decide.outputs.should_release == 'True'
         working-directory: app
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DEBUG: electron-builder
         run: npm run dist:win
       - name: Check .exe exists
         if: steps.decide.outputs.should_release == 'True'
