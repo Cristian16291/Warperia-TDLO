@@ -29,13 +29,13 @@ const handleAddonInstalaration = async (
     setDescargaring,
     setInstalaringAddonId,
     setInstalaringAddonStep,
-    installedAddons,
+    installedComplementos,
     window,
     normalizeTitle,
     parseSerializedPHPArray,
-    findChildAddons,
-    findParentAddons,
-    allAddons,
+    findChildComplementos,
+    findParentComplementos,
+    allComplementos,
     setProgress,
     startArtificialProgress,
     stopArtificialProgress,
@@ -44,9 +44,9 @@ const handleAddonInstalaration = async (
     setShowModal,
     currentExpansion,
     serverId,
-    setInstalaredAddons,
-    refreshAddonsData,
-    queuedAddons,
+    setInstalaredComplementos,
+    refreshComplementosData,
+    queuedComplementos,
     skipActualizar = false
   } = params;
 
@@ -117,43 +117,43 @@ const handleAddonInstalaration = async (
 
     // Get variations from the MAIN addon
     const hasVariations = mainAddon.custom_fields?.has_variations || [];
-    const relatedAddons = parseSerializedPHPArray(hasVariations);
+    const relatedComplementos = parseSerializedPHPArray(hasVariations);
 
     // Check if the main addon or any of its variations have bundled addons
-    const currentlyInstalaredAddon = Object.values(installedAddons).find(
+    const currentlyInstalaredAddon = Object.values(installedComplementos).find(
       (installed) => {
         // Check if the installed addon is the main addon or one of its variations
         return (
-          installed.id === mainAddon.id || relatedAddons.includes(installed.id)
+          installed.id === mainAddon.id || relatedComplementos.includes(installed.id)
         );
       }
     );
 
     // ----------------------------------------------------------------------------------
-    // Step 2: Optional Bundled Addons Check
+    // Step 2: Optional Bundled Complementos Check
     // ----------------------------------------------------------------------------------
     if (!skipBundledCheck) {
       // Check if main addon/variations have bundled addons
-      const allAddonsToCheck = [
+      const allComplementosToCheck = [
         mainAddon,
-        ...relatedAddons.map((id) => allAddons.find((a) => a.id === id)),
+        ...relatedComplementos.map((id) => allComplementos.find((a) => a.id === id)),
       ];
-      const bundledAddons = allAddonsToCheck.flatMap((parentAddon) => {
-        return findChildAddons(parentAddon, installedAddons).filter((child) => {
+      const bundledComplementos = allComplementosToCheck.flatMap((parentAddon) => {
+        return findChildComplementos(parentAddon, installedComplementos).filter((child) => {
           // Only consider children that are EXCLUSIVE to this parent
-          const childParents = findParentAddons(child, installedAddons);
+          const childParents = findParentComplementos(child, installedComplementos);
           return childParents.some((p) => p.id === parentAddon.id);
         });
       });
 
-      const findStandaloneCopies = (mainAddon, installedAddons) => {
+      const findStandaloneCopies = (mainAddon, installedComplementos) => {
         // Get main addon's root parent
         const getRootParent = (addon) => {
           if (
             addon.custom_fields?.variation &&
             addon.custom_fields.variation !== "0"
           ) {
-            const parent = allAddons.find(
+            const parent = allComplementos.find(
               (a) => a.id === parseInt(addon.custom_fields.variation)
             );
             return parent ? getRootParent(parent) : addon;
@@ -165,7 +165,7 @@ const handleAddonInstalaration = async (
 
         return [
           ...new Set(
-            Object.values(installedAddons).filter((installed) => {
+            Object.values(installedComplementos).filter((installed) => {
               const installedRoot = getRootParent(installed);
               return (
                 installedRoot.id !== mainRoot.id &&
@@ -178,14 +178,14 @@ const handleAddonInstalaration = async (
         ];
       };
 
-      if (bundledAddons.length > 0) {
+      if (bundledComplementos.length > 0) {
         setDeleteModalData({
           addon: currentlyInstalaredAddon,
           newAddon: mainAddon,
           parents: [],
-          children: bundledAddons,
+          children: bundledComplementos,
           isInstalaration: true,
-          standaloneAddons: findStandaloneCopies(mainAddon, installedAddons),
+          standaloneComplementos: findStandaloneCopies(mainAddon, installedComplementos),
         });
         setShowDeleteModal(true);
         setShowModal(false);
@@ -196,10 +196,10 @@ const handleAddonInstalaration = async (
     // ----------------------------------------------------------------------------------
     // Step 2.5: Delete existing folders from main addon + all variations
     // ----------------------------------------------------------------------------------
-    const addonsToDelete = [mainAddon.id, ...relatedAddons];
+    const addonsToDelete = [mainAddon.id, ...relatedComplementos];
     await Promise.all(
       addonsToDelete.map(async (relatedAddonId) => {
-        const installedAddon = Object.values(installedAddons).find(
+        const installedAddon = Object.values(installedComplementos).find(
           (installed) => installed.id === parseInt(relatedAddonId, 10)
         );
 
@@ -213,7 +213,7 @@ const handleAddonInstalaration = async (
               const folderPath = window.electron.pathJoin(installPath, folder);
 
               // Get ALL installed addons using this folder
-              const folderUsers = Object.values(installedAddons).filter(
+              const folderUsers = Object.values(installedComplementos).filter(
                 (inst) =>
                   inst.custom_fields.folder_list.some(([f]) => f === folder)
               );
@@ -225,7 +225,7 @@ const handleAddonInstalaration = async (
                     addon.custom_fields?.variation &&
                     addon.custom_fields.variation !== "0"
                   ) {
-                    const parent = allAddons.find(
+                    const parent = allComplementos.find(
                       (a) => a.id === parseInt(addon.custom_fields.variation)
                     );
                     return parent ? getRootParent(parent) : addon;
@@ -254,7 +254,7 @@ const handleAddonInstalaration = async (
               }
 
               // Check if folder is used by other installed addons
-              const isFolderUsed = Object.values(installedAddons).some(
+              const isFolderUsed = Object.values(installedComplementos).some(
                 (ia) =>
                   ia.id !== installedAddon.id &&
                   ia.custom_fields.folder_list.some(([f]) => f === folder)
@@ -654,10 +654,10 @@ const handleAddonInstalaration = async (
     // ----------------------------------------------------------------------------------
     await cleanupDescargar(zipFilePath);
     await updateAddonInstalarStats(addon.id, addon.type);
-    if ((!queuedAddons || queuedAddons.length === 0) && !skipActualizar) {
-      await refreshAddonsData();
+    if ((!queuedComplementos || queuedComplementos.length === 0) && !skipActualizar) {
+      await refreshComplementosData();
     }
-    if ((!queuedAddons || queuedAddons.length === 0) && !skipActualizar) {
+    if ((!queuedComplementos || queuedComplementos.length === 0) && !skipActualizar) {
     showToastMessage(
       `Your addon was ${isReinstall ? "reinstalled" : "installed"}!`,
       "success"

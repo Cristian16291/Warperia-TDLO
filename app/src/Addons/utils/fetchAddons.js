@@ -9,7 +9,7 @@ function generateCacheKey(expansion, page, search, categories, pageSize, orderby
     return `${expansion}|${page}|${search}|${categories.join(',')}|${pageSize}|${orderby}|${order}`;
 }
 
-const fetchAddons = async (expansion, page = 1, search = '', categories = [], pageSize = 20, orderby = 'installs', order = 'desc') => {
+const fetchComplementos = async (expansion, page = 1, search = '', categories = [], pageSize = 20, orderby = 'installs', order = 'desc') => {
     const cacheKey = generateCacheKey(expansion, page, search, categories, pageSize, orderby, order);
 
     // Check if we have a cached response and it's still valid
@@ -54,4 +54,4 @@ const fetchAddons = async (expansion, page = 1, search = '', categories = [], pa
     }
 };
 
-export default fetchAddons;
+export default fetchComplementos;

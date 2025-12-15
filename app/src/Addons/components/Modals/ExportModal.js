@@ -1,37 +1,37 @@
 import React, { useState, useEffect } from 'react';
 
-const ExportModal = ({ show, onClose, installedAddons, showToastMessage }) => {
-    const [selectedAddons, setSelectedAddons] = useState([]);
+const ExportModal = ({ show, onClose, installedComplementos, showToastMessage }) => {
+    const [selectedComplementos, setSelectedComplementos] = useState([]);
     const [exportCode, setExportCode] = useState('');
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
         if (show) {
             setIsLoading(true);
-            if (installedAddons) {
+            if (installedComplementos) {
                 setIsLoading(false);
             }
         }
-    }, [show, installedAddons]);
+    }, [show, installedComplementos]);
 
     const handleAddonSelect = (addon) => {
-        let updatedSelectedAddons;
-        if (selectedAddons.includes(addon)) {
-            updatedSelectedAddons = selectedAddons.filter((a) => a !== addon);
+        let updatedSelectedComplementos;
+        if (selectedComplementos.includes(addon)) {
+            updatedSelectedComplementos = selectedComplementos.filter((a) => a !== addon);
         } else {
-            updatedSelectedAddons = [...selectedAddons, addon];
+            updatedSelectedComplementos = [...selectedComplementos, addon];
         }
 
-        setSelectedAddons(updatedSelectedAddons);
+        setSelectedComplementos(updatedSelectedComplementos);
 
         // Reset the export code if no addons are selected
-        if (updatedSelectedAddons.length === 0) {
+        if (updatedSelectedComplementos.length === 0) {
             setExportCode('');
         }
     };
 
     const handleExport = () => {
-        const addonIds = selectedAddons.map(addon => addon.id);
+        const addonIds = selectedComplementos.map(addon => addon.id);
         const code = btoa(JSON.stringify(addonIds)); // Convert the selected addon IDs to base64
         setExportCode(code); // Set the export code in the state
     };
@@ -48,7 +48,7 @@ const ExportModal = ({ show, onClose, installedAddons, showToastMessage }) => {
                 <div className="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-xl modal-dark modal-switch-variations modal-fixed-height">
                     <div className="modal-content">
                         <div className="modal-header">
-                            <h5 className="modal-title">Export Addons</h5>
+                            <h5 className="modal-title">Export Complementos</h5>
                             <button type="button" className="btn-close btn-close-white" aria-label="Close" onClick={onClose}></button>
                         </div>
                         <div className="modal-body">
@@ -58,13 +58,13 @@ const ExportModal = ({ show, onClose, installedAddons, showToastMessage }) => {
                                         <span className="visually-hidden">Loading...</span>
                                     </div>
                                 </div>
-                            ) : Object.keys(installedAddons).length === 0 ? ( // Check if there are no installed addons
+                            ) : Object.keys(installedComplementos).length === 0 ? ( // Check if there are no installed addons
                                 <div className="text-muted fw-medium">
                                     <p>You don't have any installed addons available for exporting.</p>
                                 </div>
                             ) : (
                                 <div className="list-group">
-                                    {Object.values(installedAddons).map((addon) => (
+                                    {Object.values(installedComplementos).map((addon) => (
                                         <div
                                             key={addon.id}
                                             className={`list-group-item list-group-item-action d-flex justify-content-between align-items-center`}
@@ -80,7 +80,7 @@ const ExportModal = ({ show, onClose, installedAddons, showToastMessage }) => {
                                                 />
                                                 <h6 className="mb-0">{addon.title}</h6>
                                             </div>
-                                            {selectedAddons.includes(addon) && (
+                                            {selectedComplementos.includes(addon) && (
                                                 <span className="text-success"><i className="bi bi-check-circle-fill text-success me-1"></i> Selected</span>
                                             )}
                                         </div>
@@ -89,7 +89,7 @@ const ExportModal = ({ show, onClose, installedAddons, showToastMessage }) => {
                             )}
                         </div>
                         <div className="modal-footer">
-                            {exportCode && selectedAddons.length > 0 && (
+                            {exportCode && selectedComplementos.length > 0 && (
                                 <div className="input-group input-group-secondary mt-2 mb-5">
                                     <span className="text-muted mb-1 d-block w-100">Your export code is ready to be shared!</span>
                                     <input
@@ -109,7 +109,7 @@ const ExportModal = ({ show, onClose, installedAddons, showToastMessage }) => {
                                 type="button"
                                 className="btn btn-primary"
                                 onClick={handleExport}
-                                disabled={selectedAddons.length === 0}
+                                disabled={selectedComplementos.length === 0}
                             >
                                 <i className="bi bi-copy"></i> Export
                             </button>

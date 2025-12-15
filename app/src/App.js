@@ -5,8 +5,8 @@ import Registration from "./Registration.js";
 import Acceder from "./Acceder.js";
 import Home from "./Home.js";
 import UserAjustes from "./UserAjustes.js";
-import ServidoresList from "./Addons/views/ServidoresList.js";
-import ServerPage from "./Addons/views/ServerPage.js";
+import ServidoresList from "./Complementos/views/ServidoresList.js";
+import ServerPage from "./Complementos/views/ServerPage.js";
 import axios from "axios";
 import { WEB_URL } from './config.js';
 

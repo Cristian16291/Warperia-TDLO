@@ -254,7 +254,7 @@ const ModificationsModal = ({ show, onClose, server }) => {
                                     <div className="modification-item mb-4">
                                         <div className="d-flex justify-content-between align-items-center">
                                             <div>
-                                                <h6>Allow Outdated Addons</h6>
+                                                <h6>Allow Outdated Complementos</h6>
                                                 <p className="text-muted mb-0">Enable this to allow addons to load even if they are out of date. It's highly recommended<br></br> to keep this setting <strong>enabled</strong>.</p>
                                             </div>
                                             <div className="form-check form-switch">

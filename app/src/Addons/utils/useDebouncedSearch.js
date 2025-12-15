@@ -3,7 +3,7 @@ import { debounce } from 'lodash';
 import axios from 'axios';
 import { WEB_URL } from './../../config.js';
 
-const useDebouncedBuscar = (setLoading, setAddons, setTotalPages, setCurrentPage, selectedCategories, activeTab, setActiveTab, currentPostType, selectedSorting) => {
+const useDebouncedBuscar = (setLoading, setComplementos, setTotalPages, setCurrentPage, selectedCategories, activeTab, setActiveTab, currentPostType, selectedSorting) => {
   const debouncedBuscar = useCallback(
     debounce(async (value, pageSize) => {
       let loadingTimeout;
@@ -23,7 +23,7 @@ const useDebouncedBuscar = (setLoading, setAddons, setTotalPages, setCurrentPage
             params,
           });
 
-          setAddons(response.data);
+          setComplementos(response.data);
           setTotalPages(parseInt(response.headers['x-wp-totalpages']) || 1);
           setCurrentPage(1);
         } else if (value.length === 0) {
@@ -32,12 +32,12 @@ const useDebouncedBuscar = (setLoading, setAddons, setTotalPages, setCurrentPage
           return;
         }
 
-        if (activeTab !== 'browseAddons') {
-          setActiveTab('browseAddons');
+        if (activeTab !== 'browseComplementos') {
+          setActiveTab('browseComplementos');
         }
       } catch (error) {
         console.error("Error fetching addons:", error);
-        setAddons([]);
+        setComplementos([]);
         setTotalPages(1);
       } finally {
         clearTimeout(loadingTimeout);

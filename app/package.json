@@ -1,7 +1,7 @@
 {
   "name": "warperia-tdlo",
   "version": "1.2.0",
-  "description": "World of Warcraft Private Servers Addon Manager Application",
+  "description": "Gestor de addons para servidores privados de World of Warcraft",
   "main": "src/main.cjs",
   "scripts": {
     "start": "webpack serve --mode development",
@@ -20,8 +20,8 @@
   "author": "The Warperia Team",
   "license": "ISC",
   "build": {
-    "appId": "com.example.warperia-tdlo",
-    "productName": "Warperia",
+    "appId": "org.warperia.tdlo",
+    "productName": "Warperia-TDLO",
     "copyright": "Copyright © 2025 Warperia",
     "directories": {
       "output": "dist"
@@ -35,8 +35,8 @@
     "publish": [
       {
         "provider": "github",
-        "owner": "warperia",
-        "repo": "warperia-frontend"
+        "owner": "Cristian16291",
+        "repo": "Warperia-TDLO"
       }
     ],
     "win": {

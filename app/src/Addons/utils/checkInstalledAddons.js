@@ -1,29 +1,29 @@
 import axios from "axios";
 import { WEB_URL } from "./../../config.js";
-import fetchAddons from "./fetchAddons.js";
+import fetchComplementos from "./fetchComplementos.js";
 
 /**
  * Checks for installed addons in the specified game path
  */
-const checkInstalaredAddons = async (gamePath, params = {}) => {
+const checkInstalaredComplementos = async (gamePath, params = {}) => {
   const {
-    setScanningAddons,
+    setScanningComplementos,
     isPathInsideDirectory,
     showToastMessage,
     window,
-    allAddons,
-    setAllAddons,
+    allComplementos,
+    setAllComplementos,
     parseGitFingerprint,
     checkIfGitHubOutdated,
     currentExpansion,
     setModalQueue,
     setShowAddonSelectionModal,
     setCurrentModalData,
-    setInstalaredAddons
+    setInstalaredComplementos
   } = params;
 
   try {
-    setScanningAddons(true);
+    setScanningComplementos(true);
 
     // 1) Normalize the path to Interface/AddOns
     const absoluteGameDir = window.electron.pathResolve(gamePath);
@@ -43,73 +43,73 @@ const checkInstalaredAddons = async (gamePath, params = {}) => {
     // 3) Get all top-level folders in the AddOns directory
     const addonFolders = await window.electron.readDir(addonsDir);
 
-    // 4) Make sure we have the full list of allAddons; if not, fetch them in batches
-    let fetchedAddons = allAddons;
-    if (!fetchedAddons || fetchedAddons.length === 0) {
+    // 4) Make sure we have the full list of allComplementos; if not, fetch them in batches
+    let fetchedComplementos = allComplementos;
+    if (!fetchedComplementos || fetchedComplementos.length === 0) {
       let currentPage = 1;
       const pageSize = 100;
       let totalPages = 1;
 
       do {
-        const { data: batchAddons, totalPages: fetchedTotalPages } =
-          await fetchAddons(
+        const { data: batchComplementos, totalPages: fetchedTotalPages } =
+          await fetchComplementos(
             `${currentExpansion}`, // Post type or expansion
             currentPage,
             "",
             [],
             pageSize
           );
-        fetchedAddons = [...fetchedAddons, ...batchAddons];
+        fetchedComplementos = [...fetchedComplementos, ...batchComplementos];
         totalPages = fetchedTotalPages || 1;
         currentPage++;
       } while (currentPage <= totalPages);
 
-      setAllAddons(fetchedAddons);
+      setAllComplementos(fetchedComplementos);
     }
 
-    if (fetchedAddons.length === 0) {
+    if (fetchedComplementos.length === 0) {
       let currentPage = 1;
       const pageSize = 100;
       let totalPages = 1;
       do {
-        const { data: batchAddons, totalPages: fetchedTotalPages } =
-          await fetchAddons(
+        const { data: batchComplementos, totalPages: fetchedTotalPages } =
+          await fetchComplementos(
             `${currentExpansion}`,
             currentPage,
             "",
             [],
             pageSize
           );
-        fetchedAddons = [...fetchedAddons, ...batchAddons];
+        fetchedComplementos = [...fetchedComplementos, ...batchComplementos];
         totalPages = fetchedTotalPages || 1;
         currentPage++;
       } while (currentPage <= totalPages);
-      setAllAddons(fetchedAddons);
+      setAllComplementos(fetchedComplementos);
     }
 
     /*
      * 5) Create a mapping from MAIN folders to addons ONLY.
      * This prevents subfolders from incorrectly matching another addon
      */
-    const folderNameToAddons = {};
-    fetchedAddons.forEach((addon) => {
+    const folderNameToComplementos = {};
+    fetchedComplementos.forEach((addon) => {
       if (addon.custom_fields && addon.custom_fields.folder_list) {
         addon.custom_fields.folder_list.forEach(([folderName, isMain]) => {
           if (isMain === "1") {
-            if (!folderNameToAddons[folderName]) {
-              folderNameToAddons[folderName] = [];
+            if (!folderNameToComplementos[folderName]) {
+              folderNameToComplementos[folderName] = [];
             }
-            folderNameToAddons[folderName].push(addon);
+            folderNameToComplementos[folderName].push(addon);
           }
         });
       }
     });
 
     /*
-     * We'll store discovered addons in matchedAddons,
+     * We'll store discovered addons in matchedComplementos,
      * plus any conflicts in modalQueueTemp for AddonSelectionModal.
      */
-    const matchedAddons = {};
+    const matchedComplementos = {};
     let modalQueueTemp = [];
 
     // 6) Iterate over each folder in the user's AddOns directory
@@ -118,8 +118,8 @@ const checkInstalaredAddons = async (gamePath, params = {}) => {
         const folderPath = window.electron.pathJoin(addonsDir, folder);
 
         // Skip if no addon claims this folder as its main folder
-        const matchingAddons = folderNameToAddons[folder] || [];
-        if (matchingAddons.length === 0) {
+        const matchingComplementos = folderNameToComplementos[folder] || [];
+        if (matchingComplementos.length === 0) {
           return;
         }
 
@@ -141,8 +141,8 @@ const checkInstalaredAddons = async (gamePath, params = {}) => {
         const warperiaExists = await window.electron.fileExists(warperiaFile);
 
         // Create the .warperia file if it doesn't exist
-        if (!warperiaExists && matchingAddons.length === 1) {
-          const matchedAddon = matchingAddons[0];
+        if (!warperiaExists && matchingComplementos.length === 1) {
+          const matchedAddon = matchingComplementos[0];
           try {
             const warperiaContent = `ID: ${
               matchedAddon.id
@@ -182,7 +182,7 @@ const checkInstalaredAddons = async (gamePath, params = {}) => {
           }
 
           if (!filenameMatch) {
-            const matchedAddon = fetchedAddons.find(
+            const matchedAddon = fetchedComplementos.find(
               (a) => a.id === parseInt(installedAddonId, 10)
             );
             if (matchedAddon) {
@@ -201,7 +201,7 @@ const checkInstalaredAddons = async (gamePath, params = {}) => {
           }
 
           if (installedAddonId) {
-            const matchedAddon = fetchedAddons.find(
+            const matchedAddon = fetchedComplementos.find(
               (a) => a.id === parseInt(installedAddonId, 10)
             );
             if (matchedAddon) {
@@ -212,7 +212,7 @@ const checkInstalaredAddons = async (gamePath, params = {}) => {
                 (sub) => !addonFolders.includes(sub)
               );
 
-              matchedAddons[folder] = {
+              matchedComplementos[folder] = {
                 ...matchedAddon,
                 corrupted: missingFolders.length > 0,
                 missingFolders,
@@ -227,8 +227,8 @@ const checkInstalaredAddons = async (gamePath, params = {}) => {
         }
 
         // If there's exactly one matching addon, no conflict
-        if (matchingAddons.length === 1) {
-          const matchedAddon = matchingAddons[0];
+        if (matchingComplementos.length === 1) {
+          const matchedAddon = matchingComplementos[0];
           const allAddonFolders = matchedAddon.custom_fields.folder_list.map(
             ([f]) => f
           );
@@ -236,7 +236,7 @@ const checkInstalaredAddons = async (gamePath, params = {}) => {
             (sub) => !addonFolders.includes(sub)
           );
 
-          matchedAddons[folder] = {
+          matchedComplementos[folder] = {
             ...matchedAddon,
             corrupted: missingFolders.length > 0,
             missingFolders,
@@ -249,7 +249,7 @@ const checkInstalaredAddons = async (gamePath, params = {}) => {
         }
 
         // Otherwise, multiple main folder claims
-        modalQueueTemp.push(matchingAddons);
+        modalQueueTemp.push(matchingComplementos);
       })
     );
 
@@ -262,22 +262,22 @@ const checkInstalaredAddons = async (gamePath, params = {}) => {
 
     // 7.5) For each installed addon, if it has a GitHub link & local fingerprint, check if there's a new commit/release
     // This makes Warperia-TDLO "see" a new commit on refresh
-    for (const folderName of Object.keys(matchedAddons)) {
-      const installedAddon = matchedAddons[folderName];
+    for (const folderName of Object.keys(matchedComplementos)) {
+      const installedAddon = matchedComplementos[folderName];
       const isOutdatedOnGitHub = await checkIfGitHubOutdated(installedAddon);
       if (isOutdatedOnGitHub) {
         installedAddon.corrupted = true;
       }
-      matchedAddons[folderName] = installedAddon;
+      matchedComplementos[folderName] = installedAddon;
     }
 
     // 8) Actualizar our state for all installed addons we confidently matched
-    setInstalaredAddons({ ...matchedAddons });
+    setInstalaredComplementos({ ...matchedComplementos });
   } catch (error) {
     console.error("Error checking installed addons:", error);
   } finally {
-    setScanningAddons(false);
+    setScanningComplementos(false);
   }
 };
 
-export default checkInstalaredAddons;
+export default checkInstalaredComplementos;

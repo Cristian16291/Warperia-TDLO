@@ -9,14 +9,14 @@ function DeleteConfirmationModal({
   addonToDelete,
   newAddon,
   parentAvisos = [],
-  nestedAddons = [],
+  nestedComplementos = [],
   isInstalaration = false
 }) {
 
   // Build local state to track which nested addons the user also wants to delete
   const [selectedDeletions, setSelectedDeletions] = useState(() => {
     const initial = {};
-    nestedAddons.forEach((child) => {
+    nestedComplementos.forEach((child) => {
       initial[child.id] = true; // default: selected for deletion
     });
     return initial;
@@ -25,12 +25,12 @@ function DeleteConfirmationModal({
   useEffect(() => {
     if (show) {
         const initial = {};
-        nestedAddons.forEach((child) => {
+        nestedComplementos.forEach((child) => {
             initial[child.id] = true;
         });
         setSelectedDeletions(initial);
     }
-}, [show, nestedAddons]);
+}, [show, nestedComplementos]);
 
   // Toggle a sub-addon's selection
   const handleToggle = (addonId) => {
@@ -99,13 +99,13 @@ function DeleteConfirmationModal({
                 </div>
               )}
 
-              {nestedAddons.length > 0 && (
+              {nestedComplementos.length > 0 && (
                 <div className="mb-3">
                   <p>
                   {addonToDelete?.title} came with the following bundled addon(s). Select if you want to keep the bundled addon(s) installed after you delete {addonToDelete?.title}:
                   </p>
                   <ul className="list-group">
-                    {nestedAddons.map((child) => (
+                    {nestedComplementos.map((child) => (
                       <li
                         className="list-group-item d-flex align-items-center justify-content-between"
                         key={child.id}

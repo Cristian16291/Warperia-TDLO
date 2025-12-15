@@ -9,7 +9,7 @@ import React, {
 } from "react";
 import axios from "axios";
 import ContextMenu from "../components/ContextMenu.js";
-import fetchAddons from "./../utils/fetchAddons.js";
+import fetchComplementos from "./../utils/fetchComplementos.js";
 import Pagination from "./../components/Pagination.js";
 import Select from "react-select";
 import Tippy from "@tippyjs/react";
@@ -21,7 +21,7 @@ import { WEB_URL } from "./../../config.js";
 import { GITHUB_TOKEN } from "./../../config.js";
 import cleanupDescargar from "../utils/cleanupDescargar.js";
 import handleAddonInstalaration from "../utils/handleAddonInstalaration.js";
-import checkInstalaredAddons from "../utils/checkInstalaredAddons.js";
+import checkInstalaredComplementos from "../utils/checkInstalaredComplementos.js";
 
 // Stylesheets
 import "bootstrap/dist/css/bootstrap.min.css";
@@ -46,7 +46,7 @@ import InstalaredAddonCard from "./../components/Cards/InstalaredAddonCard.js";
 import BrowseAddonCard from "./../components/Cards/BrowseAddonCard.js";
 const GITHUB_ACCESS_TOKEN = `${GITHUB_TOKEN}`;
 
-const AddonsPage = ({
+const ComplementosPage = ({
     user,
     currentExpansion,
     serverPath,
@@ -55,18 +55,18 @@ const AddonsPage = ({
     setActiveTab,
     serverId
 }) => {
-    const [allAddons, setAllAddons] = useState([]);
-    const [expandedAddons, setExpandedAddons] = useState([]);
-    const [addons, setAddons] = useState([]);
+    const [allComplementos, setAllComplementos] = useState([]);
+    const [expandedComplementos, setExpandedComplementos] = useState([]);
+    const [addons, setComplementos] = useState([]);
     const [authors, setAuthors] = useState({});
     const [gameDir, setGameDir] = useState(null);
     const [loading, setLoading] = useState(true);
     const [initialLoading, setInitialLoading] = useState(true);
-    const [scanningAddons, setScanningAddons] = useState(false);
+    const [scanningComplementos, setScanningComplementos] = useState(false);
     const [downloading, setDescargaring] = useState(false);
     const [installingAddonId, setInstalaringAddonId] = useState(null);
-    const [installedAddons, setInstalaredAddons] = useState({});
-    const [corruptedAddons, setCorruptedAddons] = useState({});
+    const [installedComplementos, setInstalaredComplementos] = useState({});
+    const [corruptedComplementos, setCorruptedComplementos] = useState({});
     const [contextMenu, setContextMenu] = useState({
         visible: false,
         xPos: 0,
@@ -147,11 +147,11 @@ const AddonsPage = ({
     const [progress, setProgress] = useState(0);
     const [autoProgressTimer, setAutoProgressTimer] = useState(null);
     const [artificialProgress, setArtificialProgress] = useState(0);
-    const [queuedAddons, setQueuedAddons] = useState([]);
+    const [queuedComplementos, setQueuedComplementos] = useState([]);
 
     // Toggle the accordion open/close for a given addon ID.
     function toggleAddonExpansion(addonId) {
-        setExpandedAddons((prev) => {
+        setExpandedComplementos((prev) => {
             if (prev.includes(addonId)) {
                 return prev.filter((id) => id !== addonId);
             } else {
@@ -239,7 +239,7 @@ const AddonsPage = ({
                 }
 
                 setGameDir(sanitizedPath);
-                await scanForInstalaredAddons(sanitizedPath);
+                await scanForInstalaredComplementos(sanitizedPath);
             } catch (error) {
                 console.error("Failed to initialize game directory:", error);
             } finally {
@@ -251,47 +251,47 @@ const AddonsPage = ({
     }, [user, gamePath, currentExpansion]);
 
     useEffect(() => {
-        const fetchAllAddons = async () => {
+        const fetchAllComplementos = async () => {
             try {
-                let fetchedAddons = [];
+                let fetchedComplementos = [];
                 let currentPage = 1;
                 const pageSize = 100;
                 let totalPages = 1;
 
                 // Fetch all addons from the backend in batches
                 do {
-                    const { data: batchAddons, totalPages: fetchedTotalPages } =
-                        await fetchAddons(
+                    const { data: batchComplementos, totalPages: fetchedTotalPages } =
+                        await fetchComplementos(
                             `${currentExpansion}`,
                             currentPage,
                             "",
                             [],
                             pageSize
                         );
-                    fetchedAddons = [...fetchedAddons, ...batchAddons];
+                    fetchedComplementos = [...fetchedComplementos, ...batchComplementos];
                     totalPages = fetchedTotalPages || 1;
                     currentPage++;
                 } while (currentPage <= totalPages);
 
-                setAllAddons(fetchedAddons);
+                setAllComplementos(fetchedComplementos);
             } catch (error) {
                 console.error("Error fetching all addons:", error);
             }
         };
 
-        fetchAllAddons();
+        fetchAllComplementos();
     }, []);
 
     // Actualizar the user's installed addons
-    const refreshAddonsData = async (zipPath) => {
-        setAllAddons([]);
-        await scanForInstalaredAddons(gameDir);
+    const refreshComplementosData = async (zipPath) => {
+        setAllComplementos([]);
+        await scanForInstalaredComplementos(gameDir);
         if (zipPath) {
             await cleanupDescargar(zipPath);
         }
     };
 
-    const fetchAddonsData = useCallback(
+    const fetchComplementosData = useCallback(
         async (
             page = 1,
             search = "",
@@ -300,7 +300,7 @@ const AddonsPage = ({
         ) => {
             try {
                 setLoading(true);
-                const { data, totalPages } = await fetchAddons(
+                const { data, totalPages } = await fetchComplementos(
                     `${currentExpansion}`,
                     page,
                     search,
@@ -310,12 +310,12 @@ const AddonsPage = ({
                     "desc"
                 );
 
-                setAddons(data);
+                setComplementos(data);
                 setTotalPages(totalPages || 1);
                 setCurrentPage(page);
             } catch (error) {
                 console.error("Error fetching addons:", error);
-                setAddons([]);
+                setComplementos([]);
                 setTotalPages(1);
             } finally {
                 setLoading(false);
@@ -348,33 +348,33 @@ const AddonsPage = ({
 
     // Make sure the addon author information is fetched before we try to display it
     useEffect(() => {
-        if (activeTab === "myAddons" && Object.keys(installedAddons).length > 0) {
-            Object.values(installedAddons).forEach((addon) => {
+        if (activeTab === "myComplementos" && Object.keys(installedComplementos).length > 0) {
+            Object.values(installedComplementos).forEach((addon) => {
                 const authorId = addon?.post_author || addon?.author_id;
                 if (authorId && !authors[authorId]) {
                     fetchAuthorInfo(authorId);
                 }
             });
         }
-    }, [activeTab, installedAddons, authors]);
+    }, [activeTab, installedComplementos, authors]);
 
     useEffect(() => {
-        if (activeTab === "browseAddons" && searchQuery === "") {
-            fetchAddonsData(
+        if (activeTab === "browseComplementos" && searchQuery === "") {
+            fetchComplementosData(
                 currentPage,
                 "",
                 selectedCategories.map((option) => option.value)
             );
-        } else if (activeTab === "myAddons") {
+        } else if (activeTab === "myComplementos") {
             if (gameDir) {
-                scanForInstalaredAddons(gameDir);
+                scanForInstalaredComplementos(gameDir);
             }
         }
     }, [
         activeTab,
         currentPage,
         selectedCategories,
-        fetchAddonsData,
+        fetchComplementosData,
         searchQuery,
     ]);
 
@@ -442,9 +442,9 @@ const AddonsPage = ({
 
         if (categoryIds.length > 0) {
             setBuscarQuery(""); // Clear search query when filtering by categories
-            await fetchAddonsData(1, "", categoryIds, selectedSorting.value);
+            await fetchComplementosData(1, "", categoryIds, selectedSorting.value);
         } else {
-            await fetchAddonsData(1, "", [], selectedSorting.value); // Pass an empty array for categories if none are selected
+            await fetchComplementosData(1, "", [], selectedSorting.value); // Pass an empty array for categories if none are selected
         }
     };
 
@@ -452,7 +452,7 @@ const AddonsPage = ({
         setSelectedSorting(selectedOption);
         setPreviousSorting(selectedOption); // Actualizar previousSorting whenever sorting changes
         setCurrentPage(1); // Reset to page 1 when sorting changes
-        await fetchAddonsData(
+        await fetchComplementosData(
             1,
             searchQuery,
             selectedCategories.map((option) => option.value),
@@ -461,15 +461,15 @@ const AddonsPage = ({
     };
 
     useEffect(() => {
-        if (installedAddons && Object.keys(installedAddons).length > 0) {
+        if (installedComplementos && Object.keys(installedComplementos).length > 0) {
             setLoading(false); // Ensure rendering only after the state is set
         }
-    }, [installedAddons]);
+    }, [installedComplementos]);
 
     const currentPostType = `addon-${currentExpansion}`;
     const debouncedBuscar = useDebouncedBuscar(
         setLoading,
-        setAddons,
+        setComplementos,
         setTotalPages,
         setCurrentPage,
         selectedCategories,
@@ -487,7 +487,7 @@ const AddonsPage = ({
             // Restore the original page and sorting after clearing search
             setSelectedSorting(previousSorting);
             setCurrentPage(previousPage);
-            fetchAddonsData(
+            fetchComplementosData(
                 previousPage,
                 "",
                 selectedCategories.map((option) => option.value),
@@ -533,10 +533,10 @@ const AddonsPage = ({
     * Finds all parent addons that contain the child's main folder in their folder_list.
     *
     * @param {object} childAddon - The installed addon whose parents we're finding.
-    * @param {object} installedAddons - The full installedAddons object keyed by folder name.
+    * @param {object} installedComplementos - The full installedComplementos object keyed by folder name.
     * @return {Array} Array of parent addons (each item is an addon object).
     */
-    function findParentAddons(childAddon, installedAddons) {
+    function findParentComplementos(childAddon, installedComplementos) {
         if (!childAddon?.custom_fields?.folder_list) return [];
 
         // Identify the child's main folder
@@ -550,8 +550,8 @@ const AddonsPage = ({
 
         // Check all installed addons to see if they contain that folder (and aren't the same addon)
         const parents = [];
-        for (const key in installedAddons) {
-            const possibleParent = installedAddons[key];
+        for (const key in installedComplementos) {
+            const possibleParent = installedComplementos[key];
             if (!possibleParent?.custom_fields?.folder_list) continue;
             if (possibleParent.id === childAddon.id) continue; // exclude itself
             const hasChildFolder = possibleParent.custom_fields.folder_list.some(
@@ -571,7 +571,7 @@ const AddonsPage = ({
     * The parent's folder_list might have multiple subfolders. Any installed
     * addon whose "main folder" is in that list is considered a "child".
     */
-    function findChildAddons(parentAddon, installedAddons) {
+    function findChildComplementos(parentAddon, installedComplementos) {
         if (!parentAddon?.custom_fields?.folder_list) return [];
 
         // Gather all folder names from the parent's folder_list
@@ -579,8 +579,8 @@ const AddonsPage = ({
 
         // Then check each installed addon to see if that addon's main folder is in the parent's folder_list
         const children = [];
-        for (const key in installedAddons) {
-            const candidate = installedAddons[key];
+        for (const key in installedComplementos) {
+            const candidate = installedComplementos[key];
             if (candidate.id === parentAddon.id) continue; // skip itself
             const mainFolderEntry = candidate.custom_fields?.folder_list?.find(
                 ([_, isMain]) => isMain === "1"
@@ -599,14 +599,14 @@ const AddonsPage = ({
     /**
     * Recursively gather all sub-addons (direct and nested) under a given addon.
     * @param {object} parentAddon
-    * @param {object} installedAddons
+    * @param {object} installedComplementos
     * @returns {Set} a set of all nested addons
     */
-    function gatherAllSubAddons(parentAddon, installedAddons) {
+    function gatherAllSubComplementos(parentAddon, installedComplementos) {
         const result = new Set();
         function recurse(currentAddon) {
             // Find immediate children:
-            const children = findChildAddons(currentAddon, installedAddons);
+            const children = findChildComplementos(currentAddon, installedComplementos);
             for (const child of children) {
                 if (!result.has(child)) {
                     result.add(child);
@@ -890,13 +890,13 @@ const AddonsPage = ({
             setDescargaring,
             setInstalaringAddonId,
             setInstalaringAddonStep,
-            installedAddons,
+            installedComplementos,
             window,
             normalizeTitle,
             parseSerializedPHPArray,
-            findChildAddons,
-            findParentAddons,
-            allAddons,
+            findChildComplementos,
+            findParentComplementos,
+            allComplementos,
             setProgress,
             startArtificialProgress,
             stopArtificialProgress,
@@ -905,38 +905,38 @@ const AddonsPage = ({
             setShowModal,
             currentExpansion,
             serverId,
-            setInstalaredAddons,
+            setInstalaredComplementos,
             hasMultipleSubfolders,
-            refreshAddonsData,
+            refreshComplementosData,
             flattenSingleExtractedFolder,
             copyFolderRecursively,
-            queuedAddons,
+            queuedComplementos,
             ...options
         };
         return await handleAddonInstalaration(addon, event, isReinstall, skipBundledCheck, params);
     };
 
-    const scanForInstalaredAddons = async (gamePath) => {
+    const scanForInstalaredComplementos = async (gamePath) => {
         const params = {
-            setScanningAddons,
+            setScanningComplementos,
             isPathInsideDirectory,
             showToastMessage,
             window,
-            allAddons,
-            setAllAddons,
+            allComplementos,
+            setAllComplementos,
             parseGitFingerprint,
             checkIfGitHubOutdated,
             currentExpansion,
             setModalQueue,
             setShowAddonSelectionModal,
             setCurrentModalData,
-            setInstalaredAddons
+            setInstalaredComplementos
         };
     
-        const matchedAddons = await checkInstalaredAddons(gamePath, params);
+        const matchedComplementos = await checkInstalaredComplementos(gamePath, params);
         
-        if (matchedAddons) {
-            setInstalaredAddons(matchedAddons);
+        if (matchedComplementos) {
+            setInstalaredComplementos(matchedComplementos);
         }
     };
 
@@ -1014,9 +1014,9 @@ const AddonsPage = ({
             setInstalaringAddonStep("Finalizing installation");
 
             // Actualizar the UI to reflect the installed addon
-            const updatedAddons = { ...installedAddons };
-            updatedAddons[mainFolder] = selectedAddon;
-            setInstalaredAddons(updatedAddons);
+            const updatedComplementos = { ...installedComplementos };
+            updatedComplementos[mainFolder] = selectedAddon;
+            setInstalaredComplementos(updatedComplementos);
 
             // Process the next modal in the queue, if available
             const updatedQueue = modalQueue.slice(1);
@@ -1064,16 +1064,16 @@ const AddonsPage = ({
         const mainAddon = contextMenu.addon;
 
         // Gather parents and sub-addons
-        const parents = findParentAddons(mainAddon, installedAddons);
-        const allSubAddons = gatherAllSubAddons(mainAddon, installedAddons);
-        const nestedAddonsArray = Array.from(allSubAddons);
+        const parents = findParentComplementos(mainAddon, installedComplementos);
+        const allSubComplementos = gatherAllSubComplementos(mainAddon, installedComplementos);
+        const nestedComplementosArray = Array.from(allSubComplementos);
 
         // If there are parents or nested sub-addons, show the modal and RETURN
-        if (parents.length > 0 || nestedAddonsArray.length > 0) {
+        if (parents.length > 0 || nestedComplementosArray.length > 0) {
             setDeleteModalData({
                 addon: mainAddon,
                 parents,
-                children: nestedAddonsArray
+                children: nestedComplementosArray
             });
             setShowDeleteModal(true);
             return;
@@ -1128,7 +1128,7 @@ const AddonsPage = ({
                     )}" and related folders deleted successfully.`,
                     "success"
                 );
-                await scanForInstalaredAddons(gameDir);
+                await scanForInstalaredComplementos(gameDir);
                 await updateAddonUninstallStats(
                     contextMenu.addon.id,
                     contextMenu.addon.post_type
@@ -1151,7 +1151,7 @@ const AddonsPage = ({
     };
 
     // Confirm addon deletion for bundles (dependencies)
-    async function confirmDeleteAddons(selectedSubAddonIds) {
+    async function confirmDeleteComplementos(selectedSubAddonIds) {
         const originalAddonId = installingAddonId;
         const mainAddon = deleteModalData.addon;
         const targetAddon = deleteModalData.newAddon;
@@ -1168,7 +1168,7 @@ const AddonsPage = ({
         }
 
         if (originalAddonId) {
-            const addonToInstalar = allAddons.find(a => a.id === originalAddonId);
+            const addonToInstalar = allComplementos.find(a => a.id === originalAddonId);
             if (addonToInstalar) {
                 await handleInstalarAddon(addonToInstalar, new Event("click"), true, true);
             }
@@ -1186,15 +1186,15 @@ const AddonsPage = ({
             // Build the set of addon IDs we are actually deleting
             const allToDelete = new Set([mainAddon.id, ...selectedSubAddonIds]);
 
-            // Which installedAddons match that set?
-            const addonsToDelete = Object.values(installedAddons).filter(
+            // Which installedComplementos match that set?
+            const addonsToDelete = Object.values(installedComplementos).filter(
                 (a) => allToDelete.has(a.id)
             );
 
             // Get quick access to all installed addons by their main folder
             // so we can detect if we're about to remove the main folder of an addon the user wants to keep
             const mainFolderMap = {};
-            for (const candidate of Object.values(installedAddons)) {
+            for (const candidate of Object.values(installedComplementos)) {
                 // Each installed addon might have a main folder
                 const mainFolderEntry = candidate.custom_fields?.folder_list?.find(
                     ([_, isMain]) => isMain === "1"
@@ -1257,11 +1257,11 @@ const AddonsPage = ({
             }
 
             showToastMessage(`Correctofully deleted addon(s).`, "success");
-            await scanForInstalaredAddons(gameDir);
+            await scanForInstalaredComplementos(gameDir);
 
             // If this was triggered during an installation, proceed with the installation
             if (installingAddonId) {
-                const addonToInstalar = allAddons.find(a => a.id === installingAddonId);
+                const addonToInstalar = allComplementos.find(a => a.id === installingAddonId);
                 if (addonToInstalar) {
                     await handleInstalarAddon(addonToInstalar, new Event("click"), true, true);
                 }
@@ -1341,15 +1341,15 @@ const AddonsPage = ({
     const handleSwitchVariation = async (newVariation) => {
         if (!currentAddon) return;
 
-        const bundledAddons = findChildAddons(currentAddon, installedAddons);
+        const bundledComplementos = findChildComplementos(currentAddon, installedComplementos);
 
-        if (bundledAddons.length > 0) {
+        if (bundledComplementos.length > 0) {
             // Show delete confirmation first
             setDeleteModalData({
                 addon: currentAddon,
                 newAddon: newVariation, // Store target variation
                 parents: [],
-                children: bundledAddons,
+                children: bundledComplementos,
                 isInstalaration: true
             });
             setShowDeleteModal(true);
@@ -1380,7 +1380,7 @@ const AddonsPage = ({
                 "success"
             );
             setShowSwitchModal(false);
-            await scanForInstalaredAddons(gameDir);
+            await scanForInstalaredComplementos(gameDir);
         } catch (error) {
             console.error("Error switching variations:", error);
             showToastMessage("Failed to switch variations.", "danger");
@@ -1393,7 +1393,7 @@ const AddonsPage = ({
     const closeExportModal = () => setShowExportModal(false);
     const closeImportModal = () => setShowImportModal(false);
 
-    const handleImportAddons = async (addonIds) => {
+    const handleImportComplementos = async (addonIds) => {
         try {
             for (const id of addonIds) {
                 const addon = await axios.get(
@@ -1401,7 +1401,7 @@ const AddonsPage = ({
                 );
                 await handleInstalarAddon(addon.data, new Event("click"));
             }
-            showToastMessage("Addons imported successfully!", "success");
+            showToastMessage("Complementos imported successfully!", "success");
         } catch (error) {
             showToastMessage(
                 "Failed to import addons. Invalid export code.",
@@ -1529,10 +1529,10 @@ const AddonsPage = ({
         }
     };
 
-    const handleActualizarAllAddons = async () => {
+    const handleActualizarAllComplementos = async () => {
         try {
             // 1) Gather all addons needing update
-            const addonsToActualizar = Object.values(installedAddons).filter((addon) => {
+            const addonsToActualizar = Object.values(installedComplementos).filter((addon) => {
                 // Local vs. backend versions
                 const installedVersion = addon.localVersion || "0.0.0";
                 const backendVersion = addon.custom_fields?.version || "0.0.0";
@@ -1561,27 +1561,27 @@ const AddonsPage = ({
 
             // 3) Mark we're downloading and set the queue
             setDescargaring(true);
-            setQueuedAddons(addonsToActualizar.map(addon => addon.id));
+            setQueuedComplementos(addonsToActualizar.map(addon => addon.id));
 
             // 4) Actualizar each addon that requires an update
             for (let i = 0; i < addonsToActualizar.length; i++) {
                 const addon = addonsToActualizar[i];
                 setInstalaringAddonId(addon.id);
                 await handleActualizarAddon(addon, true);
-                setQueuedAddons(prev => prev.filter(id => id !== addon.id));
+                setQueuedComplementos(prev => prev.filter(id => id !== addon.id));
             }
 
             // 5) Correcto message + refresh
-            await refreshAddonsData();
+            await refreshComplementosData();
             showToastMessage("All addons updated successfully.", "success");
-            await scanForInstalaredAddons(gameDir);  // Re-scan installed addons
+            await scanForInstalaredComplementos(gameDir);  // Re-scan installed addons
         } catch (error) {
             console.error("Error updating all addons:", error);
             showToastMessage("Failed to update all addons.", "danger");
         } finally {
             setDescargaring(false);
             setInstalaringAddonId(null);
-            setQueuedAddons([]);
+            setQueuedComplementos([]);
         }
     };
 
@@ -1635,8 +1635,8 @@ const AddonsPage = ({
             addon?.custom_fields.title_toc || addon.title || ""
         );
 
-        // Check if the addon is installed by looking at installedAddons
-        const isInstalared = Object.values(installedAddons).some(
+        // Check if the addon is installed by looking at installedComplementos
+        const isInstalared = Object.values(installedComplementos).some(
             (installedAddon) => {
                 const normalizedInstalaredTitle = normalizeTitle(
                     installedAddon?.title || ""
@@ -1756,13 +1756,13 @@ const AddonsPage = ({
     };
 
     // Render the list of addons
-    const renderAddonsList = (addonsList) => {
-        const combinedAddonsList =
-            activeTab === "myAddons"
-                ? { ...installedAddons, ...corruptedAddons }
+    const renderComplementosList = (addonsList) => {
+        const combinedComplementosList =
+            activeTab === "myComplementos"
+                ? { ...installedComplementos, ...corruptedComplementos }
                 : addonsList;
 
-        const uniqueAddons = Object.values(combinedAddonsList).reduce(
+        const uniqueComplementos = Object.values(combinedComplementosList).reduce(
             (acc, addon) => {
                 if (!acc.some((existingAddon) => existingAddon.id === addon.id)) {
                     acc.push(addon);
@@ -1773,7 +1773,7 @@ const AddonsPage = ({
         );
 
         // Sort addons needing updates to the top
-        const sortedAddons = uniqueAddons.sort((a, b) => {
+        const sortedComplementos = uniqueComplementos.sort((a, b) => {
             // 1) Local versions
             const aLocalVersion = a.localVersion || "0.0.0";
             const bLocalVersion = b.localVersion || "0.0.0";
@@ -1814,14 +1814,14 @@ const AddonsPage = ({
             return 0; // otherwise, keep them in normal order
         });
 
-        let finalAddons = sortedAddons;
+        let finalComplementos = sortedComplementos;
 
-        if (activeTab === "myAddons") {
+        if (activeTab === "myComplementos") {
             // Apply filtering if user typed something in the installed search
             if (installedBuscarQuery && installedBuscarQuery.trim().length > 0) {
                 const searchTerm = installedBuscarQuery.toLowerCase();
 
-                finalAddons = finalAddons.filter((addon) => {
+                finalComplementos = finalComplementos.filter((addon) => {
                     const rawTitle = addon.title || addon.custom_fields?.title_toc || "";
                     const addonTitle = decodeHtmlEntities(rawTitle).toLowerCase();
                     return addonTitle.includes(searchTerm);
@@ -1829,7 +1829,7 @@ const AddonsPage = ({
             }
         }
 
-        if (activeTab === "myAddons") {
+        if (activeTab === "myComplementos") {
             return (
                 <div className="table-responsive">
                     <table className="table table-addons-installed align-middle user-select-none mb-0">
@@ -1842,16 +1842,16 @@ const AddonsPage = ({
                             </tr>
                         </thead>
                         <tbody>
-                            {finalAddons.length === 0 && installedBuscarQuery.trim().length > 0 ? (
+                            {finalComplementos.length === 0 && installedBuscarQuery.trim().length > 0 ? (
                                 <tr>
                                     <td colSpan="5" className="text-center text-muted">
                                         No results found for "{installedBuscarQuery}".
                                     </td>
                                 </tr>
                             ) : (
-                                finalAddons.map((addon) => {
+                                finalComplementos.map((addon) => {
                                     const installedAddon =
-                                        Object.values(installedAddons).find((installed) => installed.id === addon.id) || addon;
+                                        Object.values(installedComplementos).find((installed) => installed.id === addon.id) || addon;
                                     const installedVersion = installedAddon.localVersion || "N/A";
                                     const addonImage = installedAddon.featured_image
                                         ? installedAddon.featured_image
@@ -1861,8 +1861,8 @@ const AddonsPage = ({
                                     const gameVersion = postTypeVersionMap[postType] || postType;
 
                                     // Figure out child addons
-                                    const childAddons = findChildAddons(installedAddon, installedAddons);
-                                    const isExpanded = expandedAddons.includes(installedAddon.id);
+                                    const childComplementos = findChildComplementos(installedAddon, installedComplementos);
+                                    const isExpanded = expandedComplementos.includes(installedAddon.id);
 
                                     // 1) Grab local vs. backend versions
                                     const localVersion = installedAddon.localVersion || "0.0.0";
@@ -1884,7 +1884,7 @@ const AddonsPage = ({
 
                                     // Build statusContent
                                     let statusContent;
-                                    if (finalNeedsActualizar && !queuedAddons.includes(installedAddon.id) && 
+                                    if (finalNeedsActualizar && !queuedComplementos.includes(installedAddon.id) && 
                                         !downloading && installingAddonId !== installedAddon.id) {
                                         // Only show Actualizar button if it truly needs update and is not in queue
                                         statusContent = (
@@ -1896,7 +1896,7 @@ const AddonsPage = ({
                                                 Actualizar
                                             </button>
                                         );
-                                    } else if (queuedAddons.includes(installedAddon.id) && installingAddonId !== installedAddon.id) {
+                                    } else if (queuedComplementos.includes(installedAddon.id) && installingAddonId !== installedAddon.id) {
                                         // Show queued status
                                         statusContent = (
                                             <Tippy
@@ -1968,7 +1968,7 @@ const AddonsPage = ({
                                                                         <span className="visually-hidden">Loading...</span>
                                                                     </div>
                                                                 )}
-                                                                {childAddons.length > 0 && (
+                                                                {childComplementos.length > 0 && (
                                                                     <Tippy
                                                                         content="Show dependencies"
                                                                         placement="auto"
@@ -2031,7 +2031,7 @@ const AddonsPage = ({
                                             </tr>
 
                                             {/* Accordion row for sub‐addons */}
-                                            {childAddons.length > 0 && isExpanded && (
+                                            {childComplementos.length > 0 && isExpanded && (
                                                 <tr>
                                                     <td colSpan={5} style={{ background: "#1b1b1b" }}>
                                                         <div className="p-3">
@@ -2043,7 +2043,7 @@ const AddonsPage = ({
                                                             </div>
                                                             <table className="table table-sm table-dark-subaddons mb-0">
                                                                 <tbody>
-                                                                    {childAddons.map((child) => {
+                                                                    {childComplementos.map((child) => {
                                                                         const childImage = child.featured_image || "public/default-image.jpg";
 
                                                                         return (
@@ -2091,14 +2091,14 @@ const AddonsPage = ({
             );
         }
 
-        // Browse Addons
+        // Browse Complementos
         return (
             <div
-                className={`row ${activeTab === "myAddons" ? "g-4" : "g-3 row-cols-md-1 row-cols-xl-1"
+                className={`row ${activeTab === "myComplementos" ? "g-4" : "g-3 row-cols-md-1 row-cols-xl-1"
                     }`}
             >
-                {finalAddons.map((addon) => {
-                    const installedAddon = Object.values(installedAddons).find(
+                {finalComplementos.map((addon) => {
+                    const installedAddon = Object.values(installedComplementos).find(
                         (installed) => installed.id === addon.id
                     );
 
@@ -2141,7 +2141,7 @@ const AddonsPage = ({
                     )}
                 <div ref={mainHeaderRef} className="tab-content" id="addonTabsContent">
                     <div
-                        className={`tab-pane fade ${activeTab === "myAddons" ? "show active" : ""
+                        className={`tab-pane fade ${activeTab === "myComplementos" ? "show active" : ""
                             }`}
                         id="my-addons"
                         role="tabpanel"
@@ -2153,9 +2153,9 @@ const AddonsPage = ({
                                     <span>
                                     <button
                                             className="btn btn-primary"
-                                            onClick={handleActualizarAllAddons}
+                                            onClick={handleActualizarAllComplementos}
                                             disabled={
-                                                Object.values(installedAddons)
+                                                Object.values(installedComplementos)
                                                     .filter((addon) => {
                                                         const installedVersion = addon.localVersion || "0.0.0";
                                                         const backendVersion = addon.custom_fields.version || "0.0.0";
@@ -2177,7 +2177,7 @@ const AddonsPage = ({
                                                     })
                                                     .length === 0
                                                 || downloading
-                                                || queuedAddons.length > 0
+                                                || queuedComplementos.length > 0
                                             }
                                         >
                                             {downloading ? (
@@ -2225,7 +2225,7 @@ const AddonsPage = ({
                                                     className="dropdown-item py-2"
                                                     onClick={openExportModal}
                                                 >
-                                                    Export Addons
+                                                    Export Complementos
                                                 </button>
                                             </li>
                                             <li>
@@ -2233,7 +2233,7 @@ const AddonsPage = ({
                                                     className="dropdown-item py-2"
                                                     onClick={openImportModal}
                                                 >
-                                                    Import Addons
+                                                    Import Complementos
                                                 </button>
                                             </li>
                                         </ul>
@@ -2241,7 +2241,7 @@ const AddonsPage = ({
                                     <Tippy content="Actualizar your addons" placement="auto">
                                         <button
                                             className="btn btn-secondary"
-                                            onClick={refreshAddonsData}
+                                            onClick={refreshComplementosData}
                                         >
                                             <i className="bi bi-arrow-clockwise me-1" style={{ verticalAlign: '-1px' }}></i> Actualizar
                                         </button>
@@ -2249,22 +2249,22 @@ const AddonsPage = ({
                                 </div>
                             </div>
                         </div>
-                        {initialLoading || scanningAddons ? (
+                        {initialLoading || scanningComplementos ? (
                             <div className="text-center my-4">
                                 <div className="spinner-border" role="status">
-                                    <span className="visually-hidden">Scanning Addons...</span>
+                                    <span className="visually-hidden">Scanning Complementos...</span>
                                 </div>
                             </div>
                         ) : (
                             <>
-                                {Object.keys(installedAddons).length === 0 ? (
+                                {Object.keys(installedComplementos).length === 0 ? (
                                     <div className="text-muted my-4">
                                         <p>We couldn't find any addons.</p>
                                     </div>
                                 ) : (
                                     <>
-                                        {renderAddonsList(
-                                            Object.values(installedAddons)
+                                        {renderComplementosList(
+                                            Object.values(installedComplementos)
                                                 .map((installedAddon) => {
                                                     const matchedAddon = addons.find(
                                                         (addon) =>
@@ -2290,7 +2290,7 @@ const AddonsPage = ({
                         )}
                     </div>
                     <div
-                        className={`tab-pane fade ${activeTab === "browseAddons" ? "show active" : ""
+                        className={`tab-pane fade ${activeTab === "browseComplementos" ? "show active" : ""
                             }`}
                         id="browse-addons"
                         role="tabpanel"
@@ -2302,7 +2302,7 @@ const AddonsPage = ({
                                     <input
                                         className="form-control mr-sm-2"
                                         type="search"
-                                        placeholder="Buscar Addons..."
+                                        placeholder="Buscar Complementos..."
                                         value={searchQuery}
                                         onChange={handleBuscarChange}
                                     />
@@ -2339,13 +2339,13 @@ const AddonsPage = ({
                         {loading ? (
                             <div className="text-center my-4">
                                 <div className="spinner-border" role="status">
-                                    <span className="visually-hidden">Loading Addons...</span>
+                                    <span className="visually-hidden">Loading Complementos...</span>
                                 </div>
                             </div>
                         ) : (
                             <>
                                 {addons.length > 0 ? (
-                                    renderAddonsList(addons)
+                                    renderComplementosList(addons)
                                 ) : (
                                     <p className="text-muted">No addons found.</p>
                                 )}
@@ -2413,7 +2413,7 @@ const AddonsPage = ({
                     }
                 >
                     <AddonSelectionModal
-                        matchedAddons={currentModalData}
+                        matchedComplementos={currentModalData}
                         onSelectAddon={handleSelectAddon}
                         onCancel={handleCancelAddonSelection}
                     />
@@ -2456,7 +2456,7 @@ const AddonsPage = ({
                     <ExportModal
                         show={showExportModal}
                         onClose={closeExportModal}
-                        installedAddons={installedAddons}
+                        installedComplementos={installedComplementos}
                         showToastMessage={showToastMessage}
                     />
                 </Suspense>
@@ -2474,7 +2474,7 @@ const AddonsPage = ({
                     <ImportModal
                         show={showImportModal}
                         onClose={closeImportModal}
-                        onImportAddons={handleImportAddons}
+                        onImportComplementos={handleImportComplementos}
                         showToastMessage={showToastMessage}
                     />
                 </Suspense>
@@ -2510,11 +2510,11 @@ const AddonsPage = ({
                     <DeleteConfirmationModal
                         show={showDeleteModal}
                         onClose={() => setShowDeleteModal(false)}
-                        onConfirmDelete={confirmDeleteAddons}
+                        onConfirmDelete={confirmDeleteComplementos}
                         addonToDelete={deleteModalData.addon}
                         newAddon={deleteModalData.newAddon}
                         parentAvisos={deleteModalData.parents}
-                        nestedAddons={deleteModalData.children}
+                        nestedComplementos={deleteModalData.children}
                         isInstalaration={deleteModalData.isInstalaration}
                     />
                 </Suspense>
@@ -2535,7 +2535,7 @@ const AddonsPage = ({
                         onHide={handleCloseModal}
                         addon={selectedAddon}
                         loading={addonLoading}
-                        installedAddon={Object.values(installedAddons).find(a => a.id === selectedAddon?.id)}
+                        installedAddon={Object.values(installedComplementos).find(a => a.id === selectedAddon?.id)}
                         downloading={downloading}
                         installingAddonId={installingAddonId}
                         installingAddonStep={installingAddonStep}
@@ -2556,4 +2556,4 @@ const AddonsPage = ({
     );
 };
 
-export default AddonsPage;
+export default ComplementosPage;

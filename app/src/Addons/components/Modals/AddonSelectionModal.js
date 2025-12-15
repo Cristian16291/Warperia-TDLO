@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 
-const AddonSelectionModal = ({ matchedAddons, onSelectAddon, onCancel }) => {
+const AddonSelectionModal = ({ matchedComplementos, onSelectAddon, onCancel }) => {
   // State to track the loading state of the currently selected addon
   const [loadingAddonId, setLoadingAddonId] = useState(null);
 
@@ -12,7 +12,7 @@ const AddonSelectionModal = ({ matchedAddons, onSelectAddon, onCancel }) => {
     window.location.reload();
   };
 
-  const sortedAddons = [...matchedAddons].sort((a, b) => {
+  const sortedComplementos = [...matchedComplementos].sort((a, b) => {
     return a.title.localeCompare(b.title);
   });
 
@@ -28,11 +28,11 @@ const AddonSelectionModal = ({ matchedAddons, onSelectAddon, onCancel }) => {
             </div>
             <div className="modal-body">
               <p className="text-muted fw-medium mb-3">
-                Multiple matching addons were found for <strong>{sortedAddons[0]?.custom_fields.title_toc || sortedAddons[0]?.title}</strong>.
+                Multiple matching addons were found for <strong>{sortedComplementos[0]?.custom_fields.title_toc || sortedComplementos[0]?.title}</strong>.
                 Please select the version of the addon you have installed:
               </p>
               <div className="list-group">
-                {sortedAddons.map((addon) => (
+                {sortedComplementos.map((addon) => (
                   <div
                     key={addon.id}
                     className="list-group-item list-group-item-action d-flex justify-content-between align-items-center"

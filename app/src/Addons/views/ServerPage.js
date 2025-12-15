@@ -5,7 +5,7 @@ import Tippy from "@tippyjs/react";
 import "tippy.js/dist/tippy.css";
 import { WEB_URL } from "../../config.js";
 
-const AddonsPage = lazy(() => import("./AddonsPage.js"));
+const ComplementosPage = lazy(() => import("./ComplementosPage.js"));
 const EditServerModal = lazy(() =>
   import("./../../components/modals/EditServerModal.js")
 );
@@ -32,7 +32,7 @@ const ServerPage = ({ user }) => {
   const { serverId } = useParams();
   const [server, setServer] = useState(null);
   const [serverRealmlist, setServerRealmlist] = useState("");
-  const [activeTab, setActiveTab] = useState("myAddons");
+  const [activeTab, setActiveTab] = useState("myComplementos");
   const [isRunning, setIsRunning] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [serverNotFound, setServerNotFound] = useState(false);
@@ -461,22 +461,22 @@ const ServerPage = ({ user }) => {
                       <ul className="nav nav-pills flex-column">
                         <li className="nav-item mb-1">
                           <button
-                            className={`nav-link ${activeTab === "myAddons" ? "active" : ""
+                            className={`nav-link ${activeTab === "myComplementos" ? "active" : ""
                               }`}
-                            onClick={() => setActiveTab("myAddons")}
+                            onClick={() => setActiveTab("myComplementos")}
                           >
                             <i className="bi bi-box me-2"></i>{" "}
-                            <span>Instalared Addons</span>
+                            <span>Instalared Complementos</span>
                           </button>
                         </li>
                         <li className="nav-item mb-1">
                           <button
-                            className={`nav-link ${activeTab === "browseAddons" ? "active" : ""
+                            className={`nav-link ${activeTab === "browseComplementos" ? "active" : ""
                               }`}
-                            onClick={() => setActiveTab("browseAddons")}
+                            onClick={() => setActiveTab("browseComplementos")}
                           >
                             <i className="bi bi-search me-2"></i>{" "}
-                            <span>Browse Addons</span>
+                            <span>Browse Complementos</span>
                           </button>
                         </li>
                         <hr></hr>
@@ -501,7 +501,7 @@ const ServerPage = ({ user }) => {
               </div>
             </div>
             <div className="col-12 col-lg-9 right">
-              <AddonsPage
+              <ComplementosPage
                 user={user}
                 activeTab={activeTab}
                 setActiveTab={setActiveTab}
