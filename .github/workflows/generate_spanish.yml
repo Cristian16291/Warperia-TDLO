@@ -1,0 +1,26 @@
+name: Generar castellano
+on:
+  workflow_dispatch:
+jobs:
+  build-spanish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Checkout upstream
+        uses: actions/checkout@v4
+        with:
+          repository: warperia/warperia-frontend
+          ref: main
+          path: upstream
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Transform upstream to Spanish-only
+        run: |
+          node tools/tdlo_transform.js
+      - name: Commit changes
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "Generado contenido en castellano desde upstream"
+          file_pattern: "app/**"
