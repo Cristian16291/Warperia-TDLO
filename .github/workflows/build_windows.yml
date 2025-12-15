@@ -1,0 +1,45 @@
+name: Build Windows Installer
+on:
+  workflow_run:
+    workflows: ["Generar castellano"]
+    types: ["completed"]
+  workflow_dispatch:
+jobs:
+  build:
+    permissions:
+      contents: write
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install deps
+        working-directory: app
+        run: npm ci
+      - name: Make installer (Electron Forge)
+        working-directory: app
+        run: |
+          if (Test-Path package.json) {
+            $pkg = Get-Content package.json | ConvertFrom-Json
+            if ($pkg.scripts.make) { npm run make } else { npx electron-forge make }
+          } else { npm run make }
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: Warperia-TDLO-windows
+          path: |
+            app/out/make/**
+            app/dist/**
+      - name: Publish Release
+        uses: softprops/action-gh-release@v1
+        if: github.ref == 'refs/heads/main'
+        with:
+          tag_name: v${{ github.run_number }}
+          name: Warperia-TDLO v${{ github.run_number }}
+          files: |
+            app/out/make/**
+            app/dist/**
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
