@@ -8,6 +8,9 @@ on:
   push:
     branches: ["main"]
   workflow_dispatch:
+concurrency:
+  group: gen-spanish
+  cancel-in-progress: false
 jobs:
   build-spanish:
     permissions:
@@ -15,12 +18,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Debug repo
+        run: |
+          pwd
+          ls -la
       - name: Checkout upstream
         uses: actions/checkout@v4
         with:
           repository: warperia/warperia-frontend
           ref: main
           path: upstream
+      - name: Inspect upstream package.json
+        run: |
+          cat upstream/package.json | head -n 40 || true
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
@@ -28,6 +38,10 @@ jobs:
       - name: Transform upstream to Spanish-only
         run: |
           node tools/tdlo_transform.js
+      - name: List app content
+        run: |
+          ls -la app
+          test -f app/package.json && node -e "console.log(require('./app/package.json').version)"
       - name: Commit changes
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
