@@ -37,16 +37,33 @@ jobs:
           script: |
             const { repo, owner } = context.repo;
             const rel = await github.rest.repos.getLatestRelease({ owner, repo }).catch(() => null);
-            core.setOutput('result', rel ? rel.data.tag_name : '');
+            core.setOutput('tag_name', rel ? rel.data.tag_name : '');
+            core.setOutput('assets_count', rel ? (rel.data.assets?.length || 0) : 0);
+      - name: Check release by current tag
+        id: rel_by_tag
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { repo, owner } = context.repo;
+            const tag = `v${{ steps.pkg.outputs.version }}`;
+            const rel = await github.rest.repos.getReleaseByTag({ owner, repo, tag }).catch(() => null);
+            core.setOutput('exists', rel ? 'true' : 'false');
+            core.setOutput('assets_count', rel ? (rel.data.assets?.length || 0) : 0);
+            core.setOutput('release_id', rel ? rel.data.id : '');
       - name: Decide release
         id: decide
         shell: pwsh
         run: |
           $version = "${{ steps.pkg.outputs.version }}"
-          $latestTag = "${{ steps.latest.outputs.result }}"
+          $latestTag = "${{ steps.latest.outputs.tag_name }}"
           if ($latestTag.StartsWith('v')) { $latestVer = $latestTag.Substring(1) } else { $latestVer = $latestTag }
-          $should = $version -and ($version -ne $latestVer)
+          $assetsLatest = "${{ steps.latest.outputs.assets_count }}"
+          $existsByTag = "${{ steps.rel_by_tag.outputs.exists }}"
+          $assetsByTag = "${{ steps.rel_by_tag.outputs.assets_count }}"
+          $recreate = ($existsByTag -eq 'true' -and $assetsByTag -eq '0')
+          $should = $version -and ( ($version -ne $latestVer) -or $recreate )
           echo "should_release=$should" >> $env:GITHUB_OUTPUT
+          echo "recreate=$recreate" >> $env:GITHUB_OUTPUT
       - name: Debug environment
         shell: pwsh
         run: |
@@ -65,6 +82,22 @@ jobs:
         if: steps.decide.outputs.should_release == 'True'
         working-directory: app
         run: npx electron-builder --version
+      - name: Cleanup existing release/tag if recreating
+        if: steps.decide.outputs.recreate == 'True'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { repo, owner } = context.repo;
+            const tag = `v${{ steps.pkg.outputs.version }}`;
+            const release_id = parseInt(`${{ steps.rel_by_tag.outputs.release_id }}`, 10);
+            if (!isNaN(release_id) && release_id > 0) {
+              try {
+                await github.rest.repos.deleteRelease({ owner, repo, release_id });
+              } catch (e) { core.warning(`Failed to delete release: ${e}`); }
+            }
+            try {
+              await github.rest.git.deleteRef({ owner, repo, ref: `tags/${tag}` });
+            } catch (e) { core.warning(`Failed to delete tag: ${e}`); }
       - name: Make Windows NSIS .exe (electron-builder)
         if: steps.decide.outputs.should_release == 'True'
         working-directory: app
