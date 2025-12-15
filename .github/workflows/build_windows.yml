@@ -44,21 +44,21 @@ jobs:
         if: steps.decide.outputs.should_release == 'True'
         working-directory: app
         run: npm ci
-      - name: Make installer (Electron Forge)
+      - name: Build web assets
         if: steps.decide.outputs.should_release == 'True'
         working-directory: app
-        run: |
-          if (Test-Path package.json) {
-            $pkg = Get-Content package.json | ConvertFrom-Json
-            if ($pkg.scripts.make) { npm run make } else { npx electron-forge make }
-          } else { npm run make }
+        run: npm run build
+      - name: Make Windows NSIS .exe (electron-builder)
+        if: steps.decide.outputs.should_release == 'True'
+        working-directory: app
+        run: npm run dist:win
       - name: Upload artifacts
         if: steps.decide.outputs.should_release == 'True'
         uses: actions/upload-artifact@v4
         with:
           name: Warperia-TDLO-windows
           path: |
-            app/out/make/**
+            app/dist/**/*.exe
             app/dist/**
       - name: Publish Release
         if: steps.decide.outputs.should_release == 'True' && github.ref == 'refs/heads/main'
@@ -67,7 +67,7 @@ jobs:
           tag_name: v${{ steps.pkg.outputs.version }}
           name: Warperia-TDLO v${{ steps.pkg.outputs.version }}
           files: |
-            app/out/make/**
+            app/dist/**/*.exe
             app/dist/**
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
