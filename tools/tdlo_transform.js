@@ -50,6 +50,8 @@ const rep=[
   ['Warning','Aviso'],
   ['Success','Correcto'],
   ['Addons','Complementos'],
+  ['Options','Opciones'],
+  ['Exit','Salir'],
   ['Launch','Iniciar'],
   ['Restart','Reiniciar']
 ];
