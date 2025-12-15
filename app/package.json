@@ -1,6 +1,6 @@
 {
   "name": "warperia-tdlo",
-  "version": "1.2.0",
+  "version": "1.4.0",
   "description": "Gestor de addons para servidores privados de World of Warcraft",
   "main": "src/main.cjs",
   "scripts": {
