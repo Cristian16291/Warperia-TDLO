@@ -21,6 +21,8 @@ jobs:
       CI: true
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
@@ -35,40 +37,17 @@ jobs:
           if (!(Test-Path package.json)) { throw "package.json not found in app" }
           $pkg = Get-Content package.json | ConvertFrom-Json
           echo "version=$($pkg.version)" >> $env:GITHUB_OUTPUT
-      - name: Get latest release
-        id: latest
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const { repo, owner } = context.repo;
-            const rel = await github.rest.repos.getLatestRelease({ owner, repo }).catch(() => null);
-            core.setOutput('tag_name', rel ? rel.data.tag_name : '');
-            core.setOutput('assets_count', rel ? (rel.data.assets?.length || 0) : 0);
-      - name: Check release by current tag
-        id: rel_by_tag
+      - name: Ensure clean release/tag for current version
         uses: actions/github-script@v7
         with:
           script: |
             const { repo, owner } = context.repo;
             const tag = `v${{ steps.pkg.outputs.version }}`;
             const rel = await github.rest.repos.getReleaseByTag({ owner, repo, tag }).catch(() => null);
-            core.setOutput('exists', rel ? 'true' : 'false');
-            core.setOutput('assets_count', rel ? (rel.data.assets?.length || 0) : 0);
-            core.setOutput('release_id', rel ? rel.data.id : '');
-      - name: Decide release
-        id: decide
-        shell: pwsh
-        run: |
-          $version = "${{ steps.pkg.outputs.version }}"
-          $latestTag = "${{ steps.latest.outputs.tag_name }}"
-          if ($latestTag.StartsWith('v')) { $latestVer = $latestTag.Substring(1) } else { $latestVer = $latestTag }
-          $assetsLatest = "${{ steps.latest.outputs.assets_count }}"
-          $existsByTag = "${{ steps.rel_by_tag.outputs.exists }}"
-          $assetsByTag = "${{ steps.rel_by_tag.outputs.assets_count }}"
-          $recreate = ($existsByTag -eq 'true' -and $assetsByTag -eq '0')
-          $should = $version -and ( ($version -ne $latestVer) -or $recreate )
-          echo "should_release=$should" >> $env:GITHUB_OUTPUT
-          echo "recreate=$recreate" >> $env:GITHUB_OUTPUT
+            if (rel) {
+              try { await github.rest.repos.deleteRelease({ owner, repo, release_id: rel.data.id }); } catch (e) { core.warning(`Delete release failed: ${e}`); }
+              try { await github.rest.git.deleteRef({ owner, repo, ref: `tags/${tag}` }); } catch (e) { core.warning(`Delete tag failed: ${e}`); }
+            }
       - name: Debug environment
         shell: pwsh
         run: |
@@ -76,19 +55,12 @@ jobs:
           npm -v
           Get-ChildItem -Recurse app | Select-Object -First 50
       - name: Install deps (lockfile)
-        if: steps.decide.outputs.should_release == 'True' && hashFiles('app/package-lock.json') != ''
         working-directory: app
         run: npm ci --no-progress
-      - name: Install deps (no lockfile)
-        if: steps.decide.outputs.should_release == 'True' && hashFiles('app/package-lock.json') == ''
-        working-directory: app
-        run: npm install --no-progress
       - name: Build web assets
-        if: steps.decide.outputs.should_release == 'True'
         working-directory: app
         run: npm run build
       - name: Verify index.html, create fallback if missing
-        if: steps.decide.outputs.should_release == 'True'
         shell: pwsh
         working-directory: app
         run: |
@@ -101,27 +73,9 @@ jobs:
 "@ | Set-Content -Path dist/index.html -Encoding UTF8
           }
       - name: Show electron-builder version
-        if: steps.decide.outputs.should_release == 'True'
         working-directory: app
         run: npx electron-builder --version
-      - name: Cleanup existing release/tag if recreating
-        if: steps.decide.outputs.recreate == 'True'
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const { repo, owner } = context.repo;
-            const tag = `v${{ steps.pkg.outputs.version }}`;
-            const release_id = parseInt(`${{ steps.rel_by_tag.outputs.release_id }}`, 10);
-            if (!isNaN(release_id) && release_id > 0) {
-              try {
-                await github.rest.repos.deleteRelease({ owner, repo, release_id });
-              } catch (e) { core.warning(`Failed to delete release: ${e}`); }
-            }
-            try {
-              await github.rest.git.deleteRef({ owner, repo, ref: `tags/${tag}` });
-            } catch (e) { core.warning(`Failed to delete tag: ${e}`); }
-      - name: Make Windows NSIS .exe (electron-builder)
-        if: steps.decide.outputs.should_release == 'True'
+      - name: Make Windows .exe (electron-builder)
         continue-on-error: true
         working-directory: app
         env:
@@ -133,20 +87,18 @@ jobs:
           npm run dist:win *>&1 | Tee-Object -FilePath build-log.txt
       - name: Determine build result
         id: result
-        if: steps.decide.outputs.should_release == 'True'
         shell: pwsh
         run: |
           $exe = Get-ChildItem app/dist -Filter *.exe -Recurse | Select-Object -First 1
           if ($null -eq $exe) { echo "build_failed=True" >> $env:GITHUB_OUTPUT } else { echo "build_failed=False" >> $env:GITHUB_OUTPUT }
       - name: Upload build log
-        if: steps.decide.outputs.should_release == 'True'
         uses: actions/upload-artifact@v4
         with:
           name: build-log
           path: app/build-log.txt
           if-no-files-found: ignore
       - name: Upload artifacts
-        if: steps.decide.outputs.should_release == 'True' && steps.result.outputs.build_failed == 'False'
+        if: steps.result.outputs.build_failed == 'False'
         uses: actions/upload-artifact@v4
         with:
           name: Warperia-TDLO-windows
@@ -154,7 +106,7 @@ jobs:
             app/dist/**/*.exe
             app/dist/**
       - name: Publish Release
-        if: steps.decide.outputs.should_release == 'True' && steps.result.outputs.build_failed == 'False'
+        if: steps.result.outputs.build_failed == 'False'
         uses: softprops/action-gh-release@v1
         with:
           tag_name: v${{ steps.pkg.outputs.version }}
@@ -166,7 +118,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Report failure as issue (no email spam)
-        if: steps.decide.outputs.should_release == 'True' && steps.result.outputs.build_failed == 'True'
+        if: steps.result.outputs.build_failed == 'True'
         uses: actions/github-script@v7
         with:
           script: |
