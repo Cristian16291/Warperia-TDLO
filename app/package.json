@@ -1,6 +1,6 @@
 {
   "name": "warperia-tdlo",
-  "version": "1.4.0",
+  "version": "1.2.0",
   "description": "Gestor de addons para servidores privados de World of Warcraft",
   "main": "src/main.cjs",
   "scripts": {
@@ -14,15 +14,15 @@
     "dist:win": "npm run build && electron-builder --win --x64",
     "dist:mac": "npm run build && electron-builder --mac",
     "dist:linux": "npm run build && electron-builder --linux",
-    "dist:msix": "npm run dist:win && electron-windows-store --input-directory dist/win-unpacked --output-directory dist/msix --package-name Warperia-TDLO --package-display-name \"Warperia-TDLO\" --package-version 1.4.0.0 --publisher \"CN=Warperia-TDLO\" --identity-name \"YourCompanyName.WarperiaTDLO\""
+    "dist:msix": "npm run dist:win && electron-windows-store --input-directory dist/win-unpacked --output-directory dist/msix --package-name Warperia --package-display-name \"Warperia\" --package-version 1.1.9.0 --publisher \"CN=Warperia\" --identity-name \"YourCompanyName.Warperia\""
   },
   "keywords": [],
-  "author": "Warperia-TDLO Team",
+  "author": "The Warperia Team",
   "license": "ISC",
   "build": {
     "appId": "org.warperia.tdlo",
     "productName": "Warperia-TDLO",
-    "copyright": "Copyright © 2025 Warperia-TDLO",
+    "copyright": "Copyright © 2025 Warperia",
     "directories": {
       "output": "dist"
     },
