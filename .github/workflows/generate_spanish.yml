@@ -22,11 +22,11 @@ jobs:
         run: |
           pwd
           ls -la
-      - name: Checkout upstream
+      - name: Checkout upstream v1.4.0
         uses: actions/checkout@v4
         with:
           repository: warperia/warperia-frontend
-          ref: main
+          ref: v1.4.0
           path: upstream
       - name: Inspect upstream package.json
         run: |
@@ -45,5 +45,5 @@ jobs:
       - name: Commit changes
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
-          commit_message: "Generado contenido en castellano desde upstream"
+          commit_message: "Generado contenido en castellano desde upstream v1.4.0"
           file_pattern: "app/**"
