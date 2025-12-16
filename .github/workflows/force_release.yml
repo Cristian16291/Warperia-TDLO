@@ -1,0 +1,31 @@
+name: Force Release
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+concurrency:
+  group: force-release
+  cancel-in-progress: false
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Read version from app/package.json
+        id: pkg
+        run: |
+          if [ ! -f app/package.json ]; then echo "package.json not found"; exit 1; fi
+          ver=$(jq -r '.version' app/package.json)
+          echo "version=$ver" >> $GITHUB_OUTPUT
+      - name: Create Release v${{ steps.pkg.outputs.version }}
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v${{ steps.pkg.outputs.version }}
+          name: Warperia-TDLO v${{ steps.pkg.outputs.version }}
+          draft: false
+          body: |
+            Release forzado por CI. Los artefactos (instalador/zip) se adjuntarán en cuanto el build termine.
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
