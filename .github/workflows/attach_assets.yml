@@ -1,0 +1,94 @@
+name: Attach Assets to Release
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+concurrency:
+  group: attach-assets
+  cancel-in-progress: false
+jobs:
+  attach:
+    runs-on: windows-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Read version from app/package.json
+        id: pkg
+        shell: pwsh
+        working-directory: app
+        run: |
+          if (!(Test-Path package.json)) { throw "package.json not found in app" }
+          $pkg = Get-Content package.json | ConvertFrom-Json
+          echo "version=$($pkg.version)" >> $env:GITHUB_OUTPUT
+      - name: Install deps
+        working-directory: app
+        run: npm ci --no-progress
+      - name: Build web assets
+        working-directory: app
+        run: npm run build
+      - name: Show electron-builder version
+        working-directory: app
+        run: npx electron-builder --version
+      - name: Build Windows NSIS .exe
+        continue-on-error: true
+        working-directory: app
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DEBUG: electron-builder
+          CSC_IDENTITY_AUTO_DISCOVERY: false
+        run: npm run dist:win
+      - name: Check .exe exists
+        id: exe
+        shell: pwsh
+        run: |
+          $exe = Get-ChildItem app/dist -Filter *.exe -Recurse | Select-Object -First 1
+          if ($null -eq $exe) { echo "exists=False" >> $env:GITHUB_OUTPUT } else { echo "exists=True" >> $env:GITHUB_OUTPUT }
+      - name: Fallback: build win-unpacked dir
+        if: steps.exe.outputs.exists == 'False'
+        working-directory: app
+        env:
+          DEBUG: electron-builder
+        run: npx electron-builder --win --dir --publish never
+      - name: Create zip from win-unpacked
+        id: zip
+        if: steps.exe.outputs.exists == 'False'
+        shell: pwsh
+        working-directory: app
+        run: |
+          $dir = Get-ChildItem dist -Directory -Filter *win-unpacked* -Recurse | Select-Object -First 1
+          if ($null -ne $dir) {
+            $zip = Join-Path $PWD "Warperia-TDLO-win-unpacked.zip"
+            if (Test-Path $zip) { Remove-Item $zip -Force }
+            Compress-Archive -Path $dir.FullName\* -DestinationPath $zip
+            echo "zip_path=$zip" >> $env:GITHUB_OUTPUT
+          } else {
+            echo "zip_path=" >> $env:GITHUB_OUTPUT
+          }
+      - name: Publish Release with .exe
+        if: steps.exe.outputs.exists == 'True'
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v${{ steps.pkg.outputs.version }}
+          name: Warperia-TDLO v${{ steps.pkg.outputs.version }}
+          draft: false
+          files: |
+            app/dist/**/*.exe
+            app/dist/**
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Publish Release with zip fallback
+        if: steps.exe.outputs.exists == 'False' && steps.zip.outputs.zip_path != ''
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v${{ steps.pkg.outputs.version }}
+          name: Warperia-TDLO v${{ steps.pkg.outputs.version }} (fallback)
+          draft: false
+          body: "Instalador NSIS falló, se adjunta zip portable (win-unpacked)."
+          files: ${{ steps.zip.outputs.zip_path }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
