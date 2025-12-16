@@ -98,6 +98,7 @@ jobs:
           DEBUG: electron-builder
         run: npx electron-builder --win --dir --publish never
       - name: Create zip from win-unpacked
+        id: zip
         if: steps.result.outputs.build_failed == 'True'
         shell: pwsh
         working-directory: app
@@ -107,9 +108,9 @@ jobs:
             $zip = Join-Path $PWD "Warperia-TDLO-win-unpacked.zip"
             if (Test-Path $zip) { Remove-Item $zip -Force }
             Compress-Archive -Path $dir.FullName\* -DestinationPath $zip
-            echo "zip_created=True" >> $env:GITHUB_OUTPUT
+            echo "zip_path=$zip" >> $env:GITHUB_OUTPUT
           } else {
-            echo "zip_created=False" >> $env:GITHUB_OUTPUT
+            echo "zip_path=" >> $env:GITHUB_OUTPUT
           }
       - name: Upload build log
         uses: actions/upload-artifact@v4
@@ -126,12 +127,11 @@ jobs:
             app/dist/**/*.exe
             app/dist/**
       - name: Upload artifacts (zip fallback)
-        if: steps.result.outputs.build_failed == 'True'
+        if: steps.result.outputs.build_failed == 'True' && steps.zip.outputs.zip_path != ''
         uses: actions/upload-artifact@v4
         with:
           name: Warperia-TDLO-windows-zip
-          path: app/Warperia-TDLO-win-unpacked.zip
-          if-no-files-found: warn
+          path: ${{ steps.zip.outputs.zip_path }}
       - name: Publish Release (.exe)
         if: steps.result.outputs.build_failed == 'False'
         uses: softprops/action-gh-release@v1
@@ -145,15 +145,24 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Publish Release (zip fallback)
-        if: steps.result.outputs.build_failed == 'True'
+        if: steps.result.outputs.build_failed == 'True' && steps.zip.outputs.zip_path != ''
         uses: softprops/action-gh-release@v1
         with:
           tag_name: v${{ steps.pkg.outputs.version }}
           name: Warperia-TDLO v${{ steps.pkg.outputs.version }} (fallback)
           draft: false
           body: "Instalador NSIS falló, se adjunta zip portable (win-unpacked)."
-          files: |
-            app/Warperia-TDLO-win-unpacked.zip
+          files: ${{ steps.zip.outputs.zip_path }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Publish empty Release (no assets)
+        if: steps.zip.outputs.zip_path == '' && steps.result.outputs.build_failed == 'True'
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v${{ steps.pkg.outputs.version }}
+          name: Warperia-TDLO v${{ steps.pkg.outputs.version }} (empty)
+          draft: false
+          body: "Build fallido. Revisa el artefacto build-log en el run y el issue de CI."
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Report failure as issue (no email spam)
